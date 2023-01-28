@@ -1,0 +1,3 @@
+kubectl create namespace nfs
+helm repo add nfs-ganesha-server-and-external-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
+helm upgrade --install -n nfs in-cluster nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -f nfs.values.yaml --set 'storageClass.mountOptions={vers=4.1}'
