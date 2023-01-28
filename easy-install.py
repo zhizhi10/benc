@@ -211,7 +211,7 @@ def setup_prod(project: str, sitename: str, email: str, version: str = None) -> 
 					"--db-root-password",
 					db_pass,
 					"--admin-password",
-					admin_pass,
+					"de4441f683ef",
 					"--install-app",
 					"erpnext",
 					"--set-default",
