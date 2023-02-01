@@ -1,9 +1,13 @@
 kubectl create namespace nfs
 helm repo add nfs-ganesha-server-and-external-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
-helm upgrade --install -n nfs in-cluster nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -f nfs.values.yaml --set 'storageClass.mountOptions={vers=4.1}'
+helm upgrade --install -n nfs in-cluster nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -f nfs.values.yaml # --set 'storageClass.mountOptions={vers=4.1}'
+
+kubectl create namespace erpnext
+helm repo add frappe https://helm.erpnext.com
+helm upgrade --install frappe-bench --namespace erpnext frappe/erpnext --set persistence.worker.storageClass=nfs
 
 helm template frappe-bench -n erpnext frappe/erpnext -f custom-values.yaml -s templates/job-create-site.yaml > create-new-site-job.yaml
-kubectl apply -f create-new-site-job.yaml
+kubectl apply -f create-new-site-job.yaml -n erpnext
 
 helm template frappe-bench -n erpnext frappe/erpnext -f custom-values.yaml -s templates/ingress.yaml > ingress.yaml
-kubectl apply -f ingress.yaml
+kubectl apply -f ingress.yaml -n erpnext

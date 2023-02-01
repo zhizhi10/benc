@@ -1,0 +1,1 @@
+docker compose -p jmq exec backend bench new-site wushuqi.men --no-mariadb-socket --db-root-password 7af013e4f --admin-password de4441f683ef --install-app erpnext --set-default
