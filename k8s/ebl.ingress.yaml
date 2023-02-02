@@ -1,0 +1,33 @@
+---
+# Source: erpnext/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erpingress
+  labels:
+    helm.sh/chart: erpnext-6.0.4
+    app.kubernetes.io/name: erpnext
+    app.kubernetes.io/instance: frappe-bench
+    app.kubernetes.io/version: "v14.15.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:402322805322:certificate/4639dfe6-13a2-49ea-beaa-5da4c111d2f8
+    
+spec:
+  ingressClassName: alb
+  rules:
+    - host: "erp.ap-staging-core.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frappe-bench-erpnext
+                port:
+                  number: 8080

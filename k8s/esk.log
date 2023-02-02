@@ -1,0 +1,61 @@
+# create nfs env https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html
+##Create an IAM policy and role
+a.Download the IAM policy document
+$	curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/docs/iam-policy-example.json
+b.Create the policy
+$	aws iam create-policy  --policy-name AmazonEKS_EFS_CSI_Driver_Policy --policy-document file://iam-policy-example.json
+##Create an IAM role and attach the IAM policy
+$eksctl utils associate-iam-oidc-provider --region=ap-southeast-2 --cluster=my-cluster --approve 
+$eksctl create iamserviceaccount     --cluster my-cluster   --namespace kube-system     --name efs-csi-controller-sa     --attach-policy-arn arn:aws:iam::402322805322:policy/AmazonEKS_EFS_CSI_Driver_Policy     --approve     --region ap-southeast-2
+
+$helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
+$helm repo update
+$helm upgrade -i aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver     --namespace kube-system     --set image.repository=602401143452.dkr.ecr.ap-southeast-2.amazonaws.com/eks/aws-efs-csi-driver     --set controller.serviceAccount.create=false     --set controller.serviceAccount.name=efs-csi-controller-sa
+## Create Amazon EFS file system
+..........###########
+follow office doc
+# Create efs
+$aws efs create-file-system     --region ap-southeast-2     --performance-mode generalPurpose     --output text
+$aws efs describe-file-systems --query "FileSystems[*].FileSystemId" --output text
+$curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml
+##//change fileSystemId: fs-582a03f3
+$kubectl apply -f storageclass.yaml
+### test efs (skip)
+$curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/pod.yaml
+$kubectl apply -f pod.yaml
+########set efs-sc default
+$kubectl patch storageclasses.storage.k8s.io efs-sc -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+$kubectl delete sc gp2
+#run erpnext
+$kubectl create namespace erpnext
+
+$helm upgrade --install frappe-bench --namespace erpnext frappe/erpnext  --set persistence.worker.enabled=true   --set persistence.worker.size=12Gi   --set persistence.worker.storageClass=efs-sc   --set persistence.logs.enabled=true   --set persistence.logs.size=2Gi   --set persistence.logs.storageClass=efs-sc --set jobs.configure.fixVolume=false  #--set jobs.configure.enabled=false
+
+##creat site
+helm template frappe-bench -n erpnext frappe/erpnext -f custom-values.yaml -s templates/job-create-site.yaml > create-new-site-job.yaml
+kubectl apply -f create-new-site-job.yaml -n erpnext
+
+#loadblance ebl
+https://docs.aws.amazon.com/zh_cn/eks/latest/userguide/aws-load-balancer-controller.html
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.4/docs/install/iam_policy.json
+aws iam create-policy  --policy-name AWSLoadBalancerControllerIAMPolicy   --policy-document file://iam_policy.json
+eksctl create iamserviceaccount \
+  --cluster=my-cluster \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::111122223333:policy/AWSLoadBalancerControllerIAMPolicy   --approve
+helm repo add eks https://aws.github.io/eks-charts
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller 
+# skip
+helm template frappe-bench -n erpnext frappe/erpnext -f custom-values.yaml -s templates/ingress.yaml > ingress.yaml
+### elbingress
+## get AWS Certificate 
+kubectl apply -f ingress.yaml -n erpnext
+
+
+

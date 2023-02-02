@@ -3,12 +3,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: frappe-bench-erpnext-new-site-20230128115255
+  name: frappe-bench-erpnext-new-site-20230202163959
   labels:
-    helm.sh/chart: erpnext-6.0.2
+    helm.sh/chart: erpnext-6.0.5
     app.kubernetes.io/name: erpnext
     app.kubernetes.io/instance: frappe-bench
-    app.kubernetes.io/version: "v14.13.0"
+    app.kubernetes.io/version: "v14.15.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   backoffLimit: 0
@@ -66,7 +66,7 @@ spec:
             ;rm -f currentsite.txt
         env:
           - name: "SITE_NAME"
-            value: "wushuqi.men"
+            value: "erp.ap-staging-core.com"
           - name: "DB_TYPE"
             value: mariadb
           - name: "DB_HOST"
