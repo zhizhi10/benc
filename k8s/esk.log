@@ -28,7 +28,7 @@ $kubectl patch storageclasses.storage.k8s.io efs-sc -p '{"metadata": {"annotatio
 $kubectl delete sc gp2
 #run erpnext
 $kubectl create namespace erpnext
-
+$helm repo add frappe https://helm.erpnext.com
 $helm upgrade --install frappe-bench --namespace erpnext frappe/erpnext  --set persistence.worker.enabled=true   --set persistence.worker.size=12Gi   --set persistence.worker.storageClass=efs-sc   --set persistence.logs.enabled=true   --set persistence.logs.size=2Gi   --set persistence.logs.storageClass=efs-sc --set jobs.configure.fixVolume=false  #--set jobs.configure.enabled=false
 
 ##creat site
@@ -58,4 +58,6 @@ helm template frappe-bench -n erpnext frappe/erpnext -f custom-values.yaml -s te
 kubectl apply -f ingress.yaml -n erpnext
 
 
-
+#other
+## allow volume expansion
+$kubectl patch sc efs-sc -p '{"allowVolumeExpansion": true}'
